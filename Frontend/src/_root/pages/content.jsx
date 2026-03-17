@@ -13,23 +13,22 @@ export const PostsProvider = ({ children }) => {
   // Save to localStorage whenever posts change
   useEffect(() => {
     try {
-      // KEEPING IT CLEAN: Automatically prune to top 10 most recent posts
-      // to avoid QuotaExceededError while still showing recent results.
-      let postsToSave = [...posts];
-      
-      if (postsToSave.length > 10) {
-        postsToSave = postsToSave.slice(postsToSave.length - 10);
-        // We update the state too so the UI stays in sync with what's actually saved
-        setPosts(postsToSave);
+      if (posts.length > 0) {
+        localStorage.setItem("deepfake_posts", JSON.stringify(posts));
       }
-
-      localStorage.setItem("deepfake_posts", JSON.stringify(postsToSave));
     } catch (error) {
       console.error("Local storage save failed:", error);
-      // If still failing after pruning, clear all as emergency measure
       if (error.name === 'QuotaExceededError') {
-        localStorage.clear();
-        alert("Local storage is full. Cleared old history to maintain stability.");
+        // If 10 is still too much (rare), try dropping to 3 as emergency
+        const emergencyPrune = posts.slice(-3);
+        try {
+          localStorage.setItem("deepfake_posts", JSON.stringify(emergencyPrune));
+          setPosts(emergencyPrune);
+        } catch (e) {
+          localStorage.clear();
+          setPosts([]);
+          alert("Storage limit reached. High-resolution media cleared to restore app.");
+        }
       }
     }
   }, [posts]);
@@ -43,13 +42,17 @@ export const PostsProvider = ({ children }) => {
   };
 
   const addPost = (newPost) => {
-    // Ensure post has a unique ID and initial likes if not present
     const postWithId = {
       ...newPost,
       id: newPost.id || Date.now(),
       likes: newPost.likes || 0
     };
-    setPosts((prevPosts) => [...prevPosts, postWithId]);
+    
+    setPosts((prevPosts) => {
+      const nextPosts = [...prevPosts, postWithId];
+      // Prune to 10 here to avoid double-render in useEffect
+      return nextPosts.length > 10 ? nextPosts.slice(-10) : nextPosts;
+    });
   };
 
   const deletePost = (postId) => {
