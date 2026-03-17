@@ -13,11 +13,24 @@ export const PostsProvider = ({ children }) => {
   // Save to localStorage whenever posts change
   useEffect(() => {
     try {
-      localStorage.setItem("deepfake_posts", JSON.stringify(posts));
+      // KEEPING IT CLEAN: Automatically prune to top 10 most recent posts
+      // to avoid QuotaExceededError while still showing recent results.
+      let postsToSave = [...posts];
+      
+      if (postsToSave.length > 10) {
+        postsToSave = postsToSave.slice(postsToSave.length - 10);
+        // We update the state too so the UI stays in sync with what's actually saved
+        setPosts(postsToSave);
+      }
+
+      localStorage.setItem("deepfake_posts", JSON.stringify(postsToSave));
     } catch (error) {
       console.error("Local storage save failed:", error);
-      // If it's a QuotaExceededError, we could potentially alert the user or clear some logs
-      // but at least we don't crash the whole app session.
+      // If still failing after pruning, clear all as emergency measure
+      if (error.name === 'QuotaExceededError') {
+        localStorage.clear();
+        alert("Local storage is full. Cleared old history to maintain stability.");
+      }
     }
   }, [posts]);
 
