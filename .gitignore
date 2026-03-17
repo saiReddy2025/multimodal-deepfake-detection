@@ -1,0 +1,36 @@
+# Models (Large Files - Keep Local)
+*.pkl
+*.h5
+*.pb
+*.weights
+*.pt
+*.pth
+*.onnx
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+backend_run_log.txt
+full_test_results.txt
+git_status.txt
+git_add.txt
+git_commit.txt
+git_error.txt
+git_out.txt
+git_log.txt
+push_out.txt
+push_res.txt
+out.txt
+git_runner.py
+
+# Node
+node_modules/
+dist/
+frontend_run_log.txt
+
+# OS
+.DS_Store
+Thumbs.db
